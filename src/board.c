@@ -1,8 +1,10 @@
 #include "board.h"
 
 piece board[8][8];
+color current_turn = White;
+board_pos selected = {-1, -1};
 
-void initialize_board() {
+void initialize_board(piece (*board)[8]) {
     // Initialize all squares to EMPTY
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {

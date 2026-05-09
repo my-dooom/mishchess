@@ -6,7 +6,12 @@
 //------------------------------------------------------------------------------------
 // DATA STRUCTURES
 //------------------------------------------------------------------------------------
-//
+//// in board.h
+typedef struct {
+    int row;
+    int col;
+} board_pos;
+
 typedef enum {
     EMPTY,
     PAWN,
@@ -25,12 +30,12 @@ typedef enum {
 typedef struct {
     piece_type type;
     color color;
-    // Position on the board (e.g., (0,0) for a1, (7,7) for h8)
-    Vector2 position;
 } piece;
 
 extern piece board[8][8];
+extern color current_turn;
+extern board_pos selected;
 
-void initialize_board();
+void initialize_board(piece (*board)[8]);
 
 #endif // BOARD_H

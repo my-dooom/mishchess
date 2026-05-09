@@ -27,6 +27,17 @@ Rectangle piece_rects[2][7] = {
 
 };
 
+Rectangle selected_tile_rect = {48, 192, 16, 16};
+
+void draw_selection_highlight(float scale, board_pos *selection) {
+    if (selection->row == -1 || selection->col == -1)
+        return; // No selection
+
+    float ts = 16.0f * scale;
+    Rectangle dest = {selection->col * ts, selection->row * ts, ts, ts};
+    DrawRectangleLinesEx(dest, 2.0f, YELLOW);
+}
+
 void draw_pieces(Texture *tex_pattern, float scale) {
     float ts = 16.0f * scale;
     for (int row = 0; row < 8; row++) {

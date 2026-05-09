@@ -24,7 +24,7 @@ void convert_mouse_position_to_board_coordinates(Vector2 mouse_position,
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 
         *col = (int)(mouse_position.x / tile_size);
-        *row = 7 - (int)(mouse_position.y / tile_size);
+        *row = (int)(mouse_position.y / tile_size);
         const char *col_names[] = {"A", "B", "C", "D", "E", "F", "G", "H"};
         TraceLog(LOG_INFO, "Clicked on board coordinates: %s%d",
                  col_names[*col], *row + 1);
@@ -42,6 +42,9 @@ int main(void) {
                                   // based on tile size and scale
     const int screenHeight = tile_size * 8 * scale + margins;
     Vector2 mouse_position = {0, 0};
+    board_pos selected = {-1, -1};
+    int clicked_row = -1, clicked_col = -1;
+
     SetTraceLogCallback(LogColored);
 
     InitWindow(screenWidth, screenHeight,
@@ -55,22 +58,30 @@ int main(void) {
     tile tiles[2];
     initialize_render("assets/atlas.png", &tex_pattern, tiles);
 
-    initialize_board();
+    initialize_board(board);
 
     SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
         mouse_position = GetMousePosition();
-        int clicked_row, clicked_col;
         convert_mouse_position_to_board_coordinates(
             mouse_position, tile_size * scale, &clicked_row, &clicked_col);
-
+        if (clicked_row >= 0 && clicked_col >= 0) {
+            selected.row = clicked_row;
+            selected.col = clicked_col;
+        }
+        if (board[selected.row][selected.col].type != EMPTY) {
+            TraceLog(LOG_INFO, "Selected piece: %d of color %d",
+                     board[selected.row][selected.col].type,
+                     board[selected.row][selected.col].color);
+        }
         BeginDrawing();
         ClearBackground(RAYWHITE);
         draw_chessboard(tiles, &tex_pattern, scale);
         draw_pieces(&tex_pattern, scale);
         draw_board_labels(tile_size, scale);
+        draw_selection_highlight(scale, &selected);
         EndDrawing();
     }
 
