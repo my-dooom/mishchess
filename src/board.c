@@ -1,5 +1,7 @@
 #include "board.h"
 
+piece board[8][8];
+
 void initialize_board() {
     // Initialize all squares to EMPTY
     for (int i = 0; i < 8; i++) {

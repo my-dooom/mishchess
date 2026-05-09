@@ -1,7 +1,10 @@
 
+#include "raylib.h"
+
 //------------------------------------------------------------------------------------
 // DATA STRUCTURES
 //------------------------------------------------------------------------------------
+//
 typedef enum {
     EMPTY,
     PAWN,
@@ -20,8 +23,10 @@ typedef enum {
 typedef struct {
     piece_type type;
     color color;
+    // Position on the board (e.g., (0,0) for a1, (7,7) for h8)
+    Vector2 position;
 } piece;
 
-piece board[8][8];
+extern piece board[8][8];
 
 void initialize_board();
