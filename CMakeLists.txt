@@ -17,6 +17,13 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/raylib/src ${CMAKE_SOURCE_DIR}/src/include)
 target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/raylib/build/raylib)
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib winmm gdi32 opengl32)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/assets
+    COMMENT "Copying assets to build directory"
+)
 # FetchContent_MakeAvailable(raylib)
 # target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 # if(WIN32)
