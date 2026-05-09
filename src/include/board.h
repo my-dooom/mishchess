@@ -1,3 +1,5 @@
+#ifndef BOARD_H
+#define BOARD_H
 
 #include "raylib.h"
 
@@ -30,3 +32,5 @@ typedef struct {
 extern piece board[8][8];
 
 void initialize_board();
+
+#endif // BOARD_H

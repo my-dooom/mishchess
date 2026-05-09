@@ -26,7 +26,8 @@ void convert_mouse_position_to_board_coordinates(Vector2 mouse_position,
         *col = (int)(mouse_position.x / tile_size);
         *row = 7 - (int)(mouse_position.y / tile_size);
         const char *col_names[] = {"A", "B", "C", "D", "E", "F", "G", "H"};
-        TraceLog(LOG_INFO, "Clicked on board coordinates: %s%d", col_names[*col], *row + 1);
+        TraceLog(LOG_INFO, "Clicked on board coordinates: %s%d",
+                 col_names[*col], *row + 1);
     }
 }
 int main(void) {
@@ -68,6 +69,7 @@ int main(void) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
         draw_chessboard(tiles, &tex_pattern, scale);
+        draw_pieces(&tex_pattern, scale);
         draw_board_labels(tile_size, scale);
         EndDrawing();
     }

@@ -1,6 +1,47 @@
 #include "render.h"
 #include "raylib.h"
 
+Rectangle piece_rects[2][7] = {
+    // White pieces
+    [White] =
+        {
+            [EMPTY] = {64, 192, 16, 16},
+            [PAWN] = {96, 224, 16, 16},
+            [KNIGHT] = {80, 224, 16, 16},
+            [BISHOP] = {64, 224, 16, 16},
+            [ROOK] = {48, 224, 16, 16},
+            [QUEEN] = {32, 224, 16, 16},
+            [KING] = {16, 224, 16, 16},
+        },
+    // Black pieces
+    [Black] =
+        {
+            [EMPTY] = {64, 192, 16, 16},
+            [PAWN] = {96, 208, 16, 16},
+            [KNIGHT] = {80, 208, 16, 16},
+            [BISHOP] = {64, 208, 16, 16},
+            [ROOK] = {48, 208, 16, 16},
+            [QUEEN] = {32, 208, 16, 16},
+            [KING] = {16, 208, 16, 16},
+        },
+
+};
+
+void draw_pieces(Texture *tex_pattern, float scale) {
+    float ts = 16.0f * scale;
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            piece p = board[row][col];
+            if (p.type == EMPTY)
+                continue;
+
+            Rectangle src = piece_rects[p.color][p.type];
+            Rectangle dest = {col * ts, row * ts, ts, ts};
+            DrawTexturePro(*tex_pattern, src, dest, (Vector2){0, 0}, 0.0f,
+                           WHITE);
+        }
+    }
+}
 void initialize_render(const char *texture_path, Texture *tex_pattern,
                        tile *tiles) {
     /// Initializes the rendering system, including loading textures and setting
@@ -18,7 +59,8 @@ void draw_board_labels(float tile_size, float scale) {
     float ts = tile_size * scale;
     int font_size = (int)(ts * 0.35f);
     for (int c = 0; c < 8; c++) {
-        int x = (int)(c * ts + ts / 2) - MeasureText(col_names[c], font_size) / 2;
+        int x =
+            (int)(c * ts + ts / 2) - MeasureText(col_names[c], font_size) / 2;
         DrawText(col_names[c], x, (int)(8 * ts) + 4, font_size, BLACK);
     }
     for (int r = 0; r < 8; r++) {
