@@ -16,8 +16,10 @@ void initialize_board(piece (*board)[8]) {
     // Place pawns
     for (int j = 0; j < 8; j++) {
         board[1][j].type = PAWN;
+        board[1][j].en_passant = true;
         board[1][j].color = Black;
         board[6][j].type = PAWN;
+        board[6][j].en_passant = true;
         board[6][j].color = White;
     }
 

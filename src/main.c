@@ -5,6 +5,7 @@
 #include "raylib.h"
 #include "render.h"
 
+#define null_pos (board_pos){-1, -1}
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -45,8 +46,8 @@ int main(void) {
     const int screenHeight = tile_size * 8 * scale + margins;
     Vector2 mouse_position = {0, 0};
     board_pos selected = {-1, -1};
-    board_pos destination = {-1, -1};
     int clicked_row = -1, clicked_col = -1;
+    possible_moves moves = {0};
 
     SetTraceLogCallback(LogColored);
 
@@ -73,31 +74,36 @@ int main(void) {
         convert_mouse_position_to_board_coordinates(
             mouse_position, tile_size * scale, &clicked_row, &clicked_col);
         if (clicked_row >= 0 && clicked_col >= 0) {
-            if (clicked_row == selected.row && clicked_col == selected.col) {
-                // clicked same tile: deselect
-                selected.row = -1;
-                selected.col = -1;
-            } else if (selected.row >= 0 &&
-                       board[selected.row][selected.col].type != EMPTY) {
-                // piece selected, second click: attempt move
-                destination.row = clicked_row;
-                destination.col = clicked_col;
-                TraceLog(LOG_INFO, "Moving piece to: %d, %d", destination.row,
-                         destination.col);
-                move_piece(board, selected, destination);
-                selected.row = -1;
-                selected.col = -1;
-                destination.row = -1;
-                destination.col = -1;
-            } else {
-                // no piece selected yet: select
-                selected.row = clicked_row;
-                selected.col = clicked_col;
-                if (board[selected.row][selected.col].type != EMPTY) {
-                    TraceLog(LOG_INFO, "Selected piece: %d of color %d",
-                             board[selected.row][selected.col].type,
-                             board[selected.row][selected.col].color);
+            if (selected.row >= 0 &&
+                board[selected.row][selected.col].type != EMPTY) {
+                if (clicked_row == selected.row &&
+                    clicked_col == selected.col) {
+                    // deselect
+                    selected = null_pos;
+                    moves.count = 0;
+                } else {
+                    // attempt move: check if destination is in possible moves
+                    for (size_t i = 0; i < moves.count; i++) {
+                        if ((int)moves.pos[i].y == clicked_row &&
+                            (int)moves.pos[i].x == clicked_col) {
+                            move_piece(board, selected,
+                                       (board_pos){clicked_row, clicked_col});
+                            TraceLog(LOG_INFO, "Moved piece to: %d, %d",
+                                     clicked_row, clicked_col);
+                            break;
+                        }
+                    }
+                    selected = null_pos;
+                    moves.count = 0;
                 }
+            } else {
+                // select piece and compute its moves
+                selected = (board_pos){clicked_row, clicked_col};
+                moves.count = 0;
+                check_possible_moves(board, selected, &moves);
+                TraceLog(LOG_INFO, "Selected piece: %d of color %d",
+                         board[selected.row][selected.col].type,
+                         board[selected.row][selected.col].color);
             }
         }
         BeginDrawing();
@@ -106,6 +112,7 @@ int main(void) {
         draw_pieces(&tex_pattern, scale);
         draw_board_labels(tile_size, scale);
         draw_selection_highlight(scale, &selected);
+        draw_possible_moves(&moves, scale);
         EndDrawing();
     }
 

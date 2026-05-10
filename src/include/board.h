@@ -30,6 +30,8 @@ typedef enum {
 typedef struct {
     piece_type type;
     color color;
+    bool en_passant; // Only relevant for pawns, indicates if they can be
+                     // captured en passant
 } piece;
 
 extern piece board[8][8];

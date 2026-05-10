@@ -1,4 +1,5 @@
 #include "render.h"
+#include "game.h"
 #include "raylib.h"
 
 Rectangle piece_rects[2][7] = {
@@ -53,6 +54,18 @@ void draw_pieces(Texture *tex_pattern, float scale) {
         }
     }
 }
+
+void draw_possible_moves(possible_moves *moves, float scale) {
+    float ts = 16.0f * scale;
+    for (size_t i = 0; i < moves->count; i++) {
+        Vector2 pos = moves->pos[i];
+        Rectangle dest = {pos.x * ts, pos.y * ts, ts, ts};
+        Vector2 center = {(float)dest.x + dest.width / 2,
+                          (float)dest.y + dest.height / 2};
+        DrawCircleV(center, ts * 0.15f, Fade(GREEN, 0.5f));
+    }
+}
+
 void initialize_render(const char *texture_path, Texture *tex_pattern,
                        tile *tiles) {
     /// Initializes the rendering system, including loading textures and setting
