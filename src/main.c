@@ -1,5 +1,6 @@
 
 #include "board.h"
+#include "game.h"
 #include "logger.h"
 #include "raylib.h"
 #include "render.h"
@@ -30,6 +31,7 @@ void convert_mouse_position_to_board_coordinates(Vector2 mouse_position,
                  col_names[*col], *row + 1);
     }
 }
+
 int main(void) {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -43,6 +45,7 @@ int main(void) {
     const int screenHeight = tile_size * 8 * scale + margins;
     Vector2 mouse_position = {0, 0};
     board_pos selected = {-1, -1};
+    board_pos destination = {-1, -1};
     int clicked_row = -1, clicked_col = -1;
 
     SetTraceLogCallback(LogColored);
@@ -65,16 +68,37 @@ int main(void) {
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
         mouse_position = GetMousePosition();
+        clicked_row = -1;
+        clicked_col = -1;
         convert_mouse_position_to_board_coordinates(
             mouse_position, tile_size * scale, &clicked_row, &clicked_col);
         if (clicked_row >= 0 && clicked_col >= 0) {
-            selected.row = clicked_row;
-            selected.col = clicked_col;
-        }
-        if (board[selected.row][selected.col].type != EMPTY) {
-            TraceLog(LOG_INFO, "Selected piece: %d of color %d",
-                     board[selected.row][selected.col].type,
-                     board[selected.row][selected.col].color);
+            if (clicked_row == selected.row && clicked_col == selected.col) {
+                // clicked same tile: deselect
+                selected.row = -1;
+                selected.col = -1;
+            } else if (selected.row >= 0 &&
+                       board[selected.row][selected.col].type != EMPTY) {
+                // piece selected, second click: attempt move
+                destination.row = clicked_row;
+                destination.col = clicked_col;
+                TraceLog(LOG_INFO, "Moving piece to: %d, %d", destination.row,
+                         destination.col);
+                move_piece(board, selected, destination);
+                selected.row = -1;
+                selected.col = -1;
+                destination.row = -1;
+                destination.col = -1;
+            } else {
+                // no piece selected yet: select
+                selected.row = clicked_row;
+                selected.col = clicked_col;
+                if (board[selected.row][selected.col].type != EMPTY) {
+                    TraceLog(LOG_INFO, "Selected piece: %d of color %d",
+                             board[selected.row][selected.col].type,
+                             board[selected.row][selected.col].color);
+                }
+            }
         }
         BeginDrawing();
         ClearBackground(RAYWHITE);
