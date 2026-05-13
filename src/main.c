@@ -39,7 +39,7 @@ int main(void) {
     //
 
     const int tile_size = 16;
-    const float scale = 3.5f;
+    const float scale = 5.0f;
     const int margins = 150;
     const int screenWidth = 1500; // hardcoded for now, should be calculated
                                   // based on tile size and scale
@@ -73,7 +73,7 @@ int main(void) {
         clicked_col = -1;
         convert_mouse_position_to_board_coordinates(
             mouse_position, tile_size * scale, &clicked_row, &clicked_col);
-        if (clicked_row >= 0 && clicked_col >= 0) {
+        if (clicked_row >= 0 && clicked_col >= 0 && !current_anim.active) {
             if (selected.row >= 0 &&
                 board[selected.row][selected.col].type != EMPTY) {
                 if (clicked_row == selected.row &&
@@ -86,8 +86,13 @@ int main(void) {
                     for (size_t i = 0; i < moves.count; i++) {
                         if ((int)moves.pos[i].y == clicked_row &&
                             (int)moves.pos[i].x == clicked_col) {
+                            piece moving_piece =
+                                board[selected.row][selected.col];
                             move_piece(board, selected,
                                        (board_pos){clicked_row, clicked_col});
+                            start_move_animation(
+                                &current_anim, moving_piece, selected,
+                                (board_pos){clicked_row, clicked_col});
                             TraceLog(LOG_INFO, "Moved piece to: %d, %d",
                                      clicked_row, clicked_col);
                             break;
@@ -107,9 +112,11 @@ int main(void) {
             }
         }
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground((Color){0x40, 0x33, 0x53, 0xFF});
+        update_animation(&current_anim);
         draw_chessboard(tiles, &tex_pattern, scale);
         draw_pieces(&tex_pattern, scale);
+        draw_animation(&tex_pattern, &current_anim, scale);
         draw_board_labels(tile_size, scale);
         draw_selection_highlight(scale, &selected);
         draw_possible_moves(&moves, scale);
