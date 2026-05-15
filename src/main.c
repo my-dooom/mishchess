@@ -132,7 +132,7 @@ int main(void) {
 
     Texture tex_pattern;
     tile tiles[2];
-    initialize_render("assets/atlas.png", &tex_pattern, tiles);
+    initialize_render(TextFormat("%sassets/atlas.png", GetApplicationDirectory()), &tex_pattern, tiles);
 
     initialize_board(board);
 

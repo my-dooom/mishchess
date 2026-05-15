@@ -39,9 +39,15 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
-    DESTINATION bin/assets
-)
+if(APPLE)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
+        DESTINATION MishChess.app/Contents/MacOS/assets
+    )
+else()
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
+        DESTINATION bin/assets
+    )
+endif()
 
 # ------------------------------------------------------------
 # CPack — generates platform-native installers
