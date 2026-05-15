@@ -3,20 +3,28 @@ project(mishchess C)
 
 set(CMAKE_C_STANDARD 99)
 
-# include(FetchContent)
-# FetchContent_Declare(
-#   raylib
-#   GIT_REPOSITORY https://github.com/raysan5/raylib.git
-#   GIT_TAG 5.5
-# )
+# Build raylib from source (vendored); disable unused features for faster builds
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
+add_subdirectory(raylib EXCLUDE_FROM_ALL)
 
 file(GLOB_RECURSE SOURCES src/*.c)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/raylib/src
+    ${CMAKE_SOURCE_DIR}/src/include
+)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/raylib/src ${CMAKE_SOURCE_DIR}/src/include)
-target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/raylib/build/raylib)
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib winmm gdi32 opengl32)
+# raylib's own CMake target carries all platform-specific link dependencies
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+
+if(WIN32)
+    # Hide the console window in release builds
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE $<CONFIG:Release>
+    )
+endif()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -24,8 +32,48 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         $<TARGET_FILE_DIR:${PROJECT_NAME}>/assets
     COMMENT "Copying assets to build directory"
 )
-# FetchContent_MakeAvailable(raylib)
-# target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
-# if(WIN32)
-#     target_link_options(${PROJECT_NAME} PROPERITES WIN32_EXECUTABLE TRUE)
-# endif()
+
+# ------------------------------------------------------------
+# Installation rules (used by CPack)
+# ------------------------------------------------------------
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
+    DESTINATION bin/assets
+)
+
+# ------------------------------------------------------------
+# CPack — generates platform-native installers
+# ------------------------------------------------------------
+set(CPACK_PACKAGE_NAME        "MishChess")
+set(CPACK_PACKAGE_VENDOR      "miszc")
+set(CPACK_PACKAGE_VERSION     "1.0.0")
+set(CPACK_PACKAGE_DESCRIPTION "A chess game built with raylib")
+set(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME};MishChess")
+
+# Windows: NSIS installer (requires NSIS installed on the build machine)
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP")
+elseif(APPLE)
+    set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME "MishChess")
+    # Package the executable as a proper .app bundle
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME        "MishChess"
+        MACOSX_BUNDLE_BUNDLE_VERSION     "1.0.0"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+        MACOSX_BUNDLE_GUI_IDENTIFIER     "com.miszc.mishchess"
+    )
+    # Install as a .app bundle instead of a bare binary
+    install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION .)
+else()
+    # Linux: prefer DEB, fall back to RPM and TGZ
+    set(CPACK_GENERATOR "DEB;RPM;TGZ")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "miszc")
+    set(CPACK_DEBIAN_PACKAGE_SECTION    "games")
+    set(CPACK_RPM_PACKAGE_LICENSE       "Proprietary")
+endif()
+
+include(CPack)

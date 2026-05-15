@@ -10,6 +10,77 @@
 // Program main entry point
 //------------------------------------------------------------------------------------
 
+static void handle_input(int clicked_row, int clicked_col,
+                         board_pos *sel, possible_moves *moves, color *moving_color) {
+    if (clicked_row < 0 || clicked_col < 0 || current_anim.active)
+        return;
+    if (sel->row < 0 || board[sel->row][sel->col].type == EMPTY) {
+        if (board[clicked_row][clicked_col].color != *moving_color)
+            return;
+        *sel = (board_pos){clicked_row, clicked_col};
+        moves->count = 0;
+        check_possible_moves(board, *sel, moves);
+        TraceLog(LOG_INFO, "Selected piece: %d of color %d",
+                 board[sel->row][sel->col].type,
+                 board[sel->row][sel->col].color);
+        return;
+    }
+
+    if (clicked_row == sel->row && clicked_col == sel->col) {
+        *sel = null_pos;
+        moves->count = 0;
+        return;
+    }
+
+    bool valid_move = false;
+    for (size_t i = 0; i < moves->count; i++) {
+        if ((int)moves->pos[i].y == clicked_row &&
+            (int)moves->pos[i].x == clicked_col) {
+            valid_move = true;
+            break;
+        }
+    }
+
+    if (!valid_move) {
+        *sel = (board_pos){clicked_row, clicked_col};
+        moves->count = 0;
+        check_possible_moves(board, *sel, moves);
+        TraceLog(LOG_INFO, "Selected piece: %d of color %d",
+                 board[sel->row][sel->col].type,
+                 board[sel->row][sel->col].color);
+        return;
+    }
+
+    piece moving_piece = board[sel->row][sel->col];
+    if (moving_piece.type == KING && abs(clicked_col - sel->col) == 2) {
+        if (clicked_col == 6) {
+            short_castle(board, moving_piece.color);
+            start_move_animation(&current_anim, moving_piece, *sel,
+                                 (board_pos){clicked_row, clicked_col});
+            TraceLog(LOG_INFO, "Short castling performed");
+        } else if (clicked_col == 2) {
+            long_castle(board, moving_piece.color);
+            start_move_animation(&current_anim, moving_piece, *sel,
+                                 (board_pos){clicked_row, clicked_col});
+            TraceLog(LOG_INFO, "Long castling performed");
+        }
+    } else {
+        move_piece(board, *sel, (board_pos){clicked_row, clicked_col});
+        start_move_animation(&current_anim, moving_piece, *sel,
+                             (board_pos){clicked_row, clicked_col});
+        TraceLog(LOG_INFO, "Moved piece to: %d, %d", clicked_row, clicked_col);
+    }
+    // Update en passant square: set if double pawn push, clear otherwise
+    en_passant_square = null_pos;
+    if (moving_piece.type == PAWN && abs(clicked_row - sel->row) == 2) {
+        en_passant_square =
+            (board_pos){(sel->row + clicked_row) / 2, clicked_col};
+    }
+    *moving_color = (*moving_color == White) ? Black : White;
+    *sel = null_pos;
+    moves->count = 0;
+}
+
 void convert_mouse_position_to_board_coordinates(Vector2 mouse_position,
                                                  float tile_size, int *row,
                                                  int *col) {
@@ -48,6 +119,7 @@ int main(void) {
     board_pos selected = {-1, -1};
     int clicked_row = -1, clicked_col = -1;
     possible_moves moves = {0};
+    color moving_color = White;
 
     SetTraceLogCallback(LogColored);
 
@@ -73,44 +145,8 @@ int main(void) {
         clicked_col = -1;
         convert_mouse_position_to_board_coordinates(
             mouse_position, tile_size * scale, &clicked_row, &clicked_col);
-        if (clicked_row >= 0 && clicked_col >= 0 && !current_anim.active) {
-            if (selected.row >= 0 &&
-                board[selected.row][selected.col].type != EMPTY) {
-                if (clicked_row == selected.row &&
-                    clicked_col == selected.col) {
-                    // deselect
-                    selected = null_pos;
-                    moves.count = 0;
-                } else {
-                    // attempt move: check if destination is in possible moves
-                    for (size_t i = 0; i < moves.count; i++) {
-                        if ((int)moves.pos[i].y == clicked_row &&
-                            (int)moves.pos[i].x == clicked_col) {
-                            piece moving_piece =
-                                board[selected.row][selected.col];
-                            move_piece(board, selected,
-                                       (board_pos){clicked_row, clicked_col});
-                            start_move_animation(
-                                &current_anim, moving_piece, selected,
-                                (board_pos){clicked_row, clicked_col});
-                            TraceLog(LOG_INFO, "Moved piece to: %d, %d",
-                                     clicked_row, clicked_col);
-                            break;
-                        }
-                    }
-                    selected = null_pos;
-                    moves.count = 0;
-                }
-            } else {
-                // select piece and compute its moves
-                selected = (board_pos){clicked_row, clicked_col};
-                moves.count = 0;
-                check_possible_moves(board, selected, &moves);
-                TraceLog(LOG_INFO, "Selected piece: %d of color %d",
-                         board[selected.row][selected.col].type,
-                         board[selected.row][selected.col].color);
-            }
-        }
+        handle_input(clicked_row, clicked_col, &selected, &moves, &moving_color);
+
         BeginDrawing();
         ClearBackground((Color){0x40, 0x33, 0x53, 0xFF});
         update_animation(&current_anim);
