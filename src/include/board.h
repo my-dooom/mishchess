@@ -32,11 +32,14 @@ typedef struct {
     color color;
     bool en_passant; // Only relevant for pawns, indicates if they can be
                      // captured en passant
+    bool has_moved;  // Indicates if the piece has moved, relevant for castling
+                     // and pawn first move
 } piece;
 
 extern piece board[8][8];
 extern color current_turn;
 extern board_pos selected;
+extern board_pos en_passant_square;
 
 void initialize_board(piece (*board)[8]);
 
