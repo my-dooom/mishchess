@@ -12,8 +12,10 @@ jobs:
         include:
           - os: windows-latest
             name: Windows
+            generator: "MinGW Makefiles"
           - os: macos-latest
             name: macOS
+            generator: "Unix Makefiles"
 
     runs-on: ${{ matrix.os }}
     name: Build (${{ matrix.name }})
@@ -24,7 +26,7 @@ jobs:
           submodules: recursive
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles"
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -G "${{ matrix.generator }}"
 
       - name: Build
         run: cmake --build build --config Release
